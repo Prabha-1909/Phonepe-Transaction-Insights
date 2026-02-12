@@ -5,6 +5,39 @@ import plotly.express as px
 import json
 import os
 
+
+st.markdown("""
+    <style>
+        .stApp {
+            background-color: #F8F6FF;
+            color: #2E2E3A;
+        }
+
+        section[data-testid="stSidebar"] {
+            background-color: #E6E6FA;
+        }
+
+        h1, h2, h3 {
+            color: #3A3A5A;
+        }
+
+        .stMetric {
+            background-color: #FFFFFF;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .stButton>button {
+            background-color: #CDB4DB;
+            color: #2E2E3A;
+            border-radius: 8px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+
+
 # ---------------- PAGE CONFIG (MUST BE FIRST) ----------------
 st.set_page_config(layout="wide")
 st.title("📊 PHONEPE DATA VISUALIZATION AND EXPLORATION")
@@ -43,8 +76,56 @@ with st.sidebar:
 
 # ---------------- HOME ----------------
 if select == "HOME":
-    st.subheader("Welcome 👋")
-    st.write("Explore PhonePe Transactions, Users and Insurance data.")
+    st.subheader("📊 Overall Summary")
+
+    col1, col2, col3 = st.columns(3)
+
+    total_txn = transaction_df["transaction_amount"].sum()
+    total_users = user_df["registered_users"].sum()
+    total_ins = insurance_df["insurance_amount"].sum()
+
+    col1.metric("💰 Total Transaction Amount", f"₹ {total_txn:,.0f}")
+    col2.metric("👥 Total Registered Users", f"{total_users:,.0f}")
+    col3.metric("🛡️ Total Insurance Amount", f"₹ {total_ins:,.0f}")
+
+    st.markdown("---")
+
+    st.subheader("🎯 Project Objective")
+
+    st.write("""
+    This project analyzes PhonePe transaction, user, and insurance data 
+    to understand state-wise digital payment trends across India.
+
+    It provides:
+    - Interactive map visualization
+    - Year-wise filtering
+    - Top performing state analysis
+    - Comparative insights using dynamic charts
+    """)
+
+    st.markdown("---")
+
+    st.subheader("📈 Transaction Growth Over Years")
+
+    yearly_txn = (
+        transaction_df
+        .groupby("year")[["transaction_amount"]]
+        .sum()
+        .reset_index()
+    )
+
+    fig = px.line(
+        yearly_txn,
+        x="year",
+        y="transaction_amount",
+        markers=True,
+        title="Year-wise Transaction Growth"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+
+
 
 # ---------------- DATA EXPLORATION ----------------
 elif select == "DATA EXPLORATION":

@@ -128,14 +128,17 @@ elif select == "DATA EXPLORATION":
             st.plotly_chart(fig, use_container_width=True)
 
     # ---------- TAB 2 ----------
+    # ---------- TAB 2 ----------
     with tab2:
         method_2 = st.radio(
-            "Select the Method",
-            ["Map Insurance", "Map Transaction", "Map User"],
-            key="map_method"
+        "Select the Method",
+        ["Map Insurance", "Map Transaction", "Map User"],
+        key="map_method"
         )
 
+    # -------- Map Insurance --------
         if method_2 == "Map Insurance":
+
             year = st.selectbox(
                 "Select Year",
                 sorted(insurance_df["year"].unique()),
@@ -162,48 +165,231 @@ elif select == "DATA EXPLORATION":
             fig.update_geos(fitbounds="locations", visible=False)
             st.plotly_chart(fig, use_container_width=True)
 
+
+    # -------- Map Transaction --------
+        elif method_2 == "Map Transaction":
+
+                year = st.selectbox(
+                    "Select Year",
+                    sorted(transaction_df["year"].unique()),
+                    key="map_trans_year"
+                )
+
+                grouped = (
+                    transaction_df[transaction_df["year"] == year]
+                    .groupby("state")[["transaction_amount"]]
+                    .sum()
+                    .reset_index()
+                )
+
+                fig = px.choropleth(
+                    grouped,
+                    geojson=india_geojson,
+                    featureidkey="properties.state",
+                    locations="state",
+                    color="transaction_amount",
+                    color_continuous_scale="Blues",
+                    title="State-wise Transaction Amount"
+                )
+
+                fig.update_geos(fitbounds="locations", visible=False)
+                st.plotly_chart(fig, use_container_width=True)
+
+
+    # -------- Map User --------
+        elif method_2 == "Map User":
+
+            year = st.selectbox(
+                "Select Year",
+                sorted(user_df["year"].unique()),
+                key="map_user_year"
+            )
+
+            grouped = (
+                user_df[user_df["year"] == year]
+                .groupby("state")[["registered_users"]]
+                .sum()
+                .reset_index()
+            )
+
+            fig = px.choropleth(
+                grouped,
+                geojson=india_geojson,
+                featureidkey="properties.state",
+                locations="state",
+                color="registered_users",
+                color_continuous_scale="Blues",
+                title="State-wise Registered Users"
+            )
+
+            fig.update_geos(fitbounds="locations", visible=False)
+            st.plotly_chart(fig, use_container_width=True)
+
+
+
     # ---------- TAB 3 ----------
+        # ---------- TAB 3 ----------
     with tab3:
+
         method_3 = st.radio(
             "Select the Method",
             ["Top Insurance", "Top Transaction", "Top User"],
             key="top_method"
         )
 
-        if method_3 == "Top Transaction":
+        # -------- Top Insurance --------
+        if method_3 == "Top Insurance":
+
+            year = st.selectbox(
+                "Select Year",
+                sorted(insurance_df["year"].unique()),
+                key="top_ins_year_tab3"
+            )
+
             grouped = (
-                transaction_df.groupby("state")[["transaction_amount"]]
+                insurance_df[insurance_df["year"] == year]
+                .groupby("state")[["insurance_amount"]]
                 .sum()
-                .sort_values("transaction_amount", ascending=False)
+                .sort_values("insurance_amount", ascending=False)
                 .head(10)
                 .reset_index()
             )
 
             fig = px.bar(
                 grouped,
-                x="state",
-                y="transaction_amount",
-                title="Top 10 States by Transaction Amount"
+                x="insurance_amount",
+                y="state",
+                orientation="h",
+                title=f"Top 10 States by Insurance Amount ({year})"
             )
+
+            fig.update_layout(yaxis={'categoryorder': 'total ascending'})
             st.plotly_chart(fig, use_container_width=True)
 
-# ---------------- TOP CHARTS ----------------
+        # -------- Top Transaction --------
+        elif method_3 == "Top Transaction":
+
+            year = st.selectbox(
+                "Select Year",
+                sorted(transaction_df["year"].unique()),
+                key="top_txn_year_tab3"
+            )
+
+            grouped = (
+                transaction_df[transaction_df["year"] == year]
+                .groupby("state")[["transaction_amount"]]
+                .sum()
+                .sort_values("transaction_amount", ascending=False)
+                .head(10)
+                .reset_index()
+            )
+
+            fig = px.treemap(
+                grouped,
+                path=["state"],
+                values="transaction_amount",
+                title=f"Top 10 States by Transaction Amount ({year})"
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
+        # -------- Top User --------
+        elif method_3 == "Top User":
+
+            year = st.selectbox(
+                "Select Year",
+                sorted(user_df["year"].unique()),
+                key="top_user_year_tab3"
+            )
+
+            grouped = (
+                user_df[user_df["year"] == year]
+                .groupby("state")[["registered_users"]]
+                .sum()
+                .sort_values("registered_users", ascending=False)
+                .head(10)
+                .reset_index()
+            )
+
+            fig = px.pie(
+                grouped,
+                names="state",
+                values="registered_users",
+                hole=0.5,
+                title=f"Top 10 States by Registered Users ({year})"
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
+    # ---------------- TOP CHARTS ----------------
 elif select == "TOP CHARTS":
-    
 
     st.subheader("🏆 Top Charts Analysis")
 
-    chart_type = st.selectbox(
+    chart_type = st.radio(
         "Select Chart Type",
-        ["Top Insurance States", "Top Transaction States", "Top User States"]
+        ["Top Transaction States", "Top User States", "Top Insurance States"]
     )
 
-    if chart_type == "Top Insurance States":
+    # ---------------- TRANSACTION ----------------
+    if chart_type == "Top Transaction States":
 
         year = st.selectbox(
             "Select Year",
-            sorted(insurance_df["year"].unique()),
-            key="top_ins_year"
+            sorted(transaction_df["year"].unique())
+        )
+
+        grouped = (
+            transaction_df[transaction_df["year"] == year]
+            .groupby("state")[["transaction_amount"]]
+            .sum()
+            .sort_values("transaction_amount", ascending=False)
+            .head(10)
+            .reset_index()
+        )
+
+        fig = px.treemap(
+            grouped,
+            path=["state"],
+            values="transaction_amount",
+            title=f"Top 10 States by Transaction Amount ({year})"
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+    # ---------------- USERS ----------------
+    elif chart_type == "Top User States":
+
+        year = st.selectbox(
+            "Select Year",
+            sorted(user_df["year"].unique())
+        )
+
+        grouped = (
+            user_df[user_df["year"] == year]
+            .groupby("state")[["registered_users"]]
+            .sum()
+            .sort_values("registered_users", ascending=False)
+            .head(10)
+            .reset_index()
+        )
+
+        fig = px.pie(
+            grouped,
+            names="state",
+            values="registered_users",
+            hole=0.5,
+            title=f"Top 10 States by Registered Users ({year})"
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+    # ---------------- INSURANCE ----------------
+    elif chart_type == "Top Insurance States":
+
+        year = st.selectbox(
+            "Select Year",
+            sorted(insurance_df["year"].unique())
         )
 
         grouped = (
@@ -217,65 +403,11 @@ elif select == "TOP CHARTS":
 
         fig = px.bar(
             grouped,
-            x="state",
-            y="insurance_amount",
-            title=f"Top 10 States by Insurance Amount ({year})",
-            labels={"insurance_amount": "Insurance Amount"}
+            x="insurance_amount",
+            y="state",
+            orientation="h",
+            title=f"Top 10 States by Insurance Amount ({year})"
         )
 
+        fig.update_layout(yaxis={'categoryorder': 'total ascending'})
         st.plotly_chart(fig, use_container_width=True)
-
-    elif chart_type == "Top Transaction States":
-
-        year = st.selectbox(
-            "Select Year",
-            sorted(transaction_df["year"].unique()),
-            key="top_txn_year"
-        )
-
-        grouped = (
-            transaction_df[transaction_df["year"] == year]
-            .groupby("state")[["transaction_amount"]]
-            .sum()
-            .sort_values("transaction_amount", ascending=False)
-            .head(10)
-            .reset_index()
-        )
-
-        fig = px.bar(
-            grouped,
-            x="state",
-            y="transaction_amount",
-            title=f"Top 10 States by Transaction Amount ({year})",
-            labels={"transaction_amount": "Transaction Amount"}
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
-
-    elif chart_type == "Top User States":
-
-        year = st.selectbox(
-            "Select Year",
-            sorted(user_df["year"].unique()),
-            key="top_user_year"
-        )
-
-        grouped = (
-            user_df[user_df["year"] == year]
-            .groupby("state")[["registered_users"]]
-            .sum()
-            .sort_values("registered_users", ascending=False)
-            .head(10)
-            .reset_index()
-        )
-
-        fig = px.bar(
-            grouped,
-            x="state",
-            y="registered_users",
-            title=f"Top 10 States by Registered Users ({year})",
-            labels={"registered_users": "Registered Users"}
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
-
